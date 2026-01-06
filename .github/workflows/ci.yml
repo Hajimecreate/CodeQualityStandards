@@ -1,4 +1,4 @@
-name: 共通コード品質チェック
+name: Shared Quality Check & AI Review
 
 on:
   workflow_call:
@@ -16,8 +16,8 @@ on:
         default: '20'
 
 permissions:
-  contents: write      # 整形後のpushに必要
-  pull-requests: write # レビューコメントに必要
+  contents: write
+  pull-requests: write
 
 jobs:
   # ジョブ1: コード整形 (Format)
@@ -25,12 +25,14 @@ jobs:
     name: コード整形と修正
     runs-on: ubuntu-latest
     steps:
+      # 1. SPINE-Laravel のコードを取得
       - name: リポジトリをチェックアウト
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
 
-      # 共有リポジトリから設定ファイルをダウンロード
+      # 2. 共有リポジトリ（CodeQualityStandards）から設定ファイルを取得
+      #    アクセスのためのPATやTokenは、Organization設定済みなら不要
       - name: 共有設定ファイルを取得
         uses: actions/checkout@v4
         with:
@@ -38,11 +40,14 @@ jobs:
           path: .shared-config
           sparse-checkout: configs
 
-      # 設定ファイルをルートに配置
+      # 3. 設定ファイルをルートにコピー（これがないと整形ツールが設定を読み込めない）
       - name: 設定ファイルを配置
         run: |
           cp .shared-config/configs/.prettierrc .
-          cp .shared-config/configs/.php-cs-fixer.dist.php .
+          # php-cs-fixerの設定ファイルもあればコピー
+          if [ -f .shared-config/configs/.php-cs-fixer.dist.php ]; then
+            cp .shared-config/configs/.php-cs-fixer.dist.php .
+          fi
 
       # --- Prettier ---
       - name: Node.jsをセットアップ
@@ -50,7 +55,7 @@ jobs:
         with:
           node-version: ${{ inputs.node-version }}
 
-      - name: Prettierを実行 (フロントエンド整形)
+      - name: Prettierを実行
         run: |
           npm install -g prettier
           npx prettier --write "**/*.{js,jsx,ts,tsx,css,scss,html,php}" || true
@@ -62,14 +67,13 @@ jobs:
           php-version: ${{ inputs.php-version }}
           tools: php-cs-fixer
 
-      - name: PHP-CS-Fixerを実行 (バックエンド整形)
+      - name: PHP-CS-Fixerを実行
         run: php-cs-fixer fix --allow-risky=yes || true
 
       # --- Commit ---
       - name: 変更をコミット
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          # ここがGitHub上のコミットログとして残ります
           commit_message: "🎨 自動整形を適用しました (Prettier & PHP-CS-Fixer)"
           branch: ${{ github.head_ref }}
 
@@ -78,14 +82,14 @@ jobs:
     name: AIコードレビュー
     needs: format
     runs-on: ubuntu-latest
-    if: always() # 整形でコミットされても実行する
+    if: always()
     steps:
       - name: リポジトリをチェックアウト
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # git diffのために履歴が必要
+          fetch-depth: 0
 
-      # 共有リポジトリからスクリプトをダウンロード
+      # 4. 共有リポジトリからスクリプトを取得
       - name: 共有スクリプトを取得
         uses: actions/checkout@v4
         with:
@@ -106,5 +110,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-        # 共有フォルダ内のスクリプトを実行
-        run: python3 .shared-config/scripts/review.py
+          REPO_NAME: ${{ github.repository }}
+        # 【最重要】ここが .github/scripts/... だと失敗します
+        # ダウンロードしたフォルダ (.shared-config) 内を指定してください
+        run: python .shared-config/scripts/review.py
