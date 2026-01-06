@@ -34,7 +34,7 @@ jobs:
       - name: 共有設定ファイルを取得
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository_owner }}/code-quality-standards
+          repository: ${{ github.repository_owner }}/CodeQualityStandards
           path: .shared-config
           sparse-checkout: configs
 
@@ -89,7 +89,7 @@ jobs:
       - name: 共有スクリプトを取得
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository_owner }}/code-quality-standards
+          repository: ${{ github.repository_owner }}/CodeQualityStandards
           path: .shared-config
           sparse-checkout: scripts
 
