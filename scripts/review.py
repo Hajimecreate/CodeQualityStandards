@@ -56,10 +56,20 @@ def main():
     repo_name = os.environ.get("REPO_NAME")
     pr_number_str = os.environ.get("PR_NUMBER")
 
-    # 必須変数のチェック
-    if not all([api_key, github_token, repo_name, pr_number_str]):
-        print("Error: Missing environment variables.")
+    # --- 修正箇所 START ---
+    # どの変数が不足しているかを確認して出力する
+    missing_vars = []
+    if not api_key: missing_vars.append("GEMINI_API_KEY")
+    if not github_token: missing_vars.append("GITHUB_TOKEN")
+    if not repo_name: missing_vars.append("REPO_NAME")
+    if not pr_number_str: missing_vars.append("PR_NUMBER")
+
+    if missing_vars:
+        print(f"Error: Missing environment variables: {', '.join(missing_vars)}")
+        # GitHub Actionsのログで見やすくするため、値の中身も（マスクして）確認用に出力推奨
+        print(f"Debug Info: REPO_NAME={repo_name}, PR_NUMBER={pr_number_str}")
         sys.exit(1)
+    # --- 修正箇所 END ---
 
     try:
         pr_number = int(pr_number_str)
