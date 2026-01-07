@@ -10,7 +10,17 @@ return (new Config())
     ->setParallelConfig(ParallelConfigFactory::detect()) // @TODO 4.0 no need to call this manually
     ->setRiskyAllowed(false)
     ->setRules([
-        '@auto' => true
+        '@auto' => true,
+        'align_multiline_comment' => true,
+        'binary_operator_spaces' => [
+            'operators' => [
+                '=>' => 'align_single_space_minimal',
+                '=' => 'align_single_space_minimal',
+            ],
+        ],
+        'unused_use' => [
+            'remove_unused' => true,
+        ],
     ])
     // 💡 by default, Fixer looks for `*.php` files excluding `./vendor/` - here, you can groom this config
     ->setFinder(
@@ -22,9 +32,9 @@ return (new Config())
             // 💡 folders to exclude, if any
             // ->exclude([/* ... */])
             // 💡 path patterns to exclude, if any
-            // ->notPath([/* ... */])
-            // 💡 extra configs
-            // ->ignoreDotFiles(false) // true by default in v3, false in v4 or future mode
-            // ->ignoreVCS(true) // true by default
+            ->notPath('*.blade.php')
+    // 💡 extra configs
+    // ->ignoreDotFiles(false) // true by default in v3, false in v4 or future mode
+    // ->ignoreVCS(true) // true by default
     )
 ;
