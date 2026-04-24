@@ -32,7 +32,8 @@ return (new Config())
             // 💡 folders to exclude, if any
             // ->exclude([/* ... */])
             // 💡 path patterns to exclude, if any
-            ->notPath('*.blade.php')
+            // ->notPath('*.blade.php')
+            ->notName('*.blade.php')
     // 💡 extra configs
     // ->ignoreDotFiles(false) // true by default in v3, false in v4 or future mode
     // ->ignoreVCS(true) // true by default
